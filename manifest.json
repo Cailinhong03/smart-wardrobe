@@ -1,21 +1,22 @@
 {
   "name": "智能电子衣橱",
   "short_name": "电子衣橱",
-  "description": "帮助您管理衣物、生成个性化穿搭推荐的应用",
+  "description": "根据您的风格和天气，为您打造每日完美穿搭",
   "start_url": "/index.html",
   "display": "standalone",
-  "background_color": "#121212",
-  "theme_color": "#F3A4AC",
+  "background_color": "#FFF8F3",
+  "theme_color": "#8B5E3C",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "assets/icons/icon-192x192.png",
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%238B5E3C'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white'>👗</text></svg>",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/svg+xml"
     },
     {
-      "src": "assets/icons/icon-512x512.png",
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%238B5E3C'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white'>👗</text></svg>",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/svg+xml"
     }
   ]
 }

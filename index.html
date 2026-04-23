@@ -1,879 +1,1044 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>智能电子衣橱</title>
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#F3A4AC">
-    <link rel="apple-touch-icon" href="/assets/icons/icon-192x192.png">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#F3A4AC',
-                        secondary: '#84BECA',
-                        dark: '#121212',
-                        light: '#FEDAB8',
-                        accent: '#EF4067',
-                        red: '#BE0001'
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        .glass {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        .gradient-bg {
-            background: linear-gradient(135deg, #F3A4AC 0%, #84BECA 100%);
-        }
-        .card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
-        .page { display: none; }
-        .page.active { display: block; }
-        .modal { display: none; }
-        .modal.active { display: flex; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>智能电子衣橱 - Smart Wardrobe</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#8B5E3C">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      /* Pattern网站温暖奶油色调 */
+      --cream: #FFF8F3;           /* 主背景 - 温暖奶油色 */
+      --cream-dark: #FDF3EB;      /* 深奶油色 */
+      --brown-primary: #8B5E3C;   /* 主棕色 - 温暖的土色调 */
+      --brown-light: #A67C52;     /* 浅棕色 */
+      --brown-dark: #6D4C32;      /* 深棕色 */
+      --terracotta: #D4846A;      /* 陶土红 - 点缀色 */
+      --sage-green: #A8B5A0;      /* 鼠尾草绿 - 辅助色 */
+      --charcoal: #3D3D3D;        /* 炭灰 - 文字色 */
+      --gray-light: #F5F5F5;      /* 浅灰 */
+      --border-light: #EDE5DC;    /* 边框色 */
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: var(--cream);
+      background-image: linear-gradient(135deg, var(--cream) 0%, var(--cream-dark) 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+      color: var(--charcoal);
+    }
+    .glass-card {
+      background: rgba(255, 248, 243, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(139, 94, 60, 0.06);
+      border: 1px solid var(--border-light);
+    }
+    .gradient-button {
+      background: linear-gradient(135deg, var(--brown-primary) 0%, var(--terracotta) 100%);
+      transition: all 0.3s ease;
+      color: white;
+    }
+    .gradient-button:active { transform: scale(0.96); }
+    .nav-item { transition: all 0.2s ease; color: var(--brown-light); }
+    .nav-item.active { color: var(--brown-primary); font-weight: 600; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.4s ease-out; }
+    .page { display: none; }
+    .page.active { display: block; animation: fadeIn 0.4s ease-out; }
+    .checkbox-custom {
+      width: 18px; height: 18px; border: 2px solid var(--brown-primary);
+      border-radius: 3px; appearance: none; cursor: pointer;
+      background: white;
+    }
+    .checkbox-custom:checked { background: var(--brown-primary); }
+    .checkbox-custom:checked::after {
+      content: '✓'; color: white; font-size: 12px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .blogger-card {
+      background: linear-gradient(135deg, rgba(212, 132, 106, 0.08), rgba(168, 181, 160, 0.08));
+      border: 1px solid var(--border-light);
+    }
+    .loading {
+      display: inline-block; width: 20px; height: 20px;
+      border: 3px solid rgba(243, 164, 172, 0.3);
+      border-radius: 50%; border-top-color: var(--primary-pink);
+      animation: spin 1s ease-in-out infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .outfit-option {
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .outfit-option:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .outfit-option.selected {
+      border: 2px solid var(--primary-pink);
+      background: rgba(243, 164, 172, 0.1);
+    }
+  </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <!-- 欢迎页面 -->
-    <div id="welcome-page" class="page active fixed inset-0 z-50 gradient-bg flex items-center justify-center p-4">
-        <div class="glass rounded-2xl p-8 max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <h1 class="text-3xl font-bold text-dark text-center mb-2">智能电子衣橱</h1>
-            <p class="text-dark text-center mb-6 text-sm">减少穿搭决策时间，提升审美品质</p>
+<body class="text-gray-800">
 
-            <form id="user-info-form" class="space-y-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-dark font-medium mb-1 text-sm">身高 (cm)</label>
-                        <input type="number" id="height" class="w-full px-3 py-2 rounded-lg glass border border-white/30 text-sm" placeholder="165">
-                    </div>
-                    <div>
-                        <label class="block text-dark font-medium mb-1 text-sm">体重 (kg)</label>
-                        <input type="number" id="weight" class="w-full px-3 py-2 rounded-lg glass border border-white/30 text-sm" placeholder="50">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-dark font-medium mb-1 text-sm">身材类型</label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button type="button" class="body-type-btn glass rounded-lg p-2 text-center text-sm" data-type="pear">梨型</button>
-                        <button type="button" class="body-type-btn glass rounded-lg p-2 text-center text-sm" data-type="apple">苹果型</button>
-                        <button type="button" class="body-type-btn glass rounded-lg p-2 text-center text-sm" data-type="h">H型</button>
-                        <button type="button" class="body-type-btn glass rounded-lg p-2 text-center text-sm" data-type="hourglass">沙漏型</button>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-dark font-medium mb-1 text-sm">风格偏好 (可多选)</label>
-                    <div class="grid grid-cols-3 gap-2">
-                        <button type="button" class="style-btn glass rounded-lg p-2 text-center text-xs" data-style="casual">休闲</button>
-                        <button type="button" class="style-btn glass rounded-lg p-2 text-center text-xs" data-style="sporty">运动</button>
-                        <button type="button" class="style-btn glass rounded-lg p-2 text-center text-xs" data-style="retro">复古</button>
-                        <button type="button" class="style-btn glass rounded-lg p-2 text-center text-xs" data-style="minimal">极简</button>
-                        <button type="button" class="style-btn glass rounded-lg p-2 text-center text-xs" data-style="street">街头</button>
-                        <button type="button" class="style-btn glass rounded-lg p-2 text-center text-xs" data-style="elegant">优雅</button>
-                        <button type="button" class="style-btn glass rounded-lg p-2 text-center text-xs" data-style="oldMoney">老钱风</button>
-                        <button type="button" class="style-btn glass rounded-lg p-2 text-center text-xs" data-style="american">美式</button>
-                        <button type="button" class="style-btn glass rounded-lg p-2 text-center text-xs" data-style="korean">韩系</button>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-dark font-medium mb-1 text-sm">舞蹈课信息</label>
-                    <div class="space-y-2">
-                        <select id="dance-type" class="w-full px-3 py-2 rounded-lg glass border border-white/30 text-sm">
-                            <option value="">请选择舞种</option>
-                            <option value="ballet">芭蕾</option>
-                            <option value="jazz">爵士</option>
-                            <option value="hiphop">嘻哈</option>
-                            <option value="latin">拉丁</option>
-                        </select>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-dark font-medium mb-1 text-xs">上课日</label>
-                                <select id="dance-day" class="w-full px-3 py-2 rounded-lg glass border border-white/30 text-sm">
-                                    <option value="">请选择</option>
-                                    <option value="Monday">周一</option>
-                                    <option value="Tuesday">周二</option>
-                                    <option value="Wednesday">周三</option>
-                                    <option value="Thursday">周四</option>
-                                    <option value="Friday">周五</option>
-                                    <option value="Saturday">周六</option>
-                                    <option value="Sunday">周日</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-dark font-medium mb-1 text-xs">上课时间</label>
-                                <select id="dance-time" class="w-full px-3 py-2 rounded-lg glass border border-white/30 text-sm">
-                                    <option value="">请选择</option>
-                                    <option value="morning">上午</option>
-                                    <option value="afternoon">下午</option>
-                                    <option value="evening">晚上</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-dark font-medium mb-1 text-sm">通勤方式</label>
-                    <div class="flex flex-wrap gap-4">
-                        <label class="flex items-center">
-                            <input type="checkbox" id="by-bike" class="mr-1">
-                            <span class="text-sm">骑自行车</span>
-                        </label>
-                        <label class="flex items-center">
-                            <input type="checkbox" id="has-gym" class="mr-1">
-                            <span class="text-sm">有健身计划</span>
-                        </label>
-                    </div>
-                </div>
-
-                <button type="submit" class="w-full bg-gradient-to-r from-primary to-secondary text-white font-bold py-3 rounded-lg hover:opacity-90 transition-opacity">
-                    开始使用
-                </button>
-            </form>
+  <!-- ==================== 欢迎页面 ==================== -->
+  <div id="welcomePage" class="page active min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+      <div class="text-center mb-6 fade-in">
+        <div class="w-20 h-20 mx-auto mb-4 rounded-full gradient-button flex items-center justify-center">
+          <i class="fas fa-shirt text-white text-3xl"></i>
         </div>
-    </div>
-
-    <!-- 主页面 -->
-    <div id="main-page" class="page">
-        <!-- 顶部导航 -->
-        <header class="gradient-bg text-white p-4 shadow-md sticky top-0 z-40">
-            <div class="container mx-auto flex justify-between items-center">
-                <h1 class="text-xl font-bold">智能电子衣橱</h1>
-                <div class="flex items-center space-x-3">
-                    <div id="weather-info" class="flex items-center space-x-2 text-sm">
-                        <i class="fa fa-sun-o"></i>
-                        <span id="temperature">22°C</span>
-                        <span id="weather-desc" class="text-xs">晴天</span>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <!-- 内容区域 -->
-        <main class="container mx-auto p-4 pb-24">
-            <!-- 首页 -->
-            <section id="home-section" class="page-section active">
-                <!-- 功能导航 -->
-                <div class="grid grid-cols-4 gap-3 mb-6">
-                    <button onclick="showPage('add-clothing')" class="glass rounded-xl p-3 text-center card-hover transition-all">
-                        <div class="w-10 h-10 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-1">
-                            <i class="fa fa-plus text-primary"></i>
-                        </div>
-                        <div class="text-dark font-medium text-xs">添加衣物</div>
-                    </button>
-                    <button onclick="showPage('weekly-outfit')" class="glass rounded-xl p-3 text-center card-hover transition-all">
-                        <div class="w-10 h-10 bg-secondary/20 rounded-full flex items-center justify-center mx-auto mb-1">
-                            <i class="fa fa-calendar text-secondary"></i>
-                        </div>
-                        <div class="text-dark font-medium text-xs">一周穿搭</div>
-                    </button>
-                    <button onclick="showPage('dance-outfit')" class="glass rounded-xl p-3 text-center card-hover transition-all">
-                        <div class="w-10 h-10 bg-accent/20 rounded-full flex items-center justify-center mx-auto mb-1">
-                            <i class="fa fa-music text-accent"></i>
-                        </div>
-                        <div class="text-dark font-medium text-xs">舞蹈穿搭</div>
-                    </button>
-                    <button onclick="showPage('weather-outfit')" class="glass rounded-xl p-3 text-center card-hover transition-all">
-                        <div class="w-10 h-10 bg-red/20 rounded-full flex items-center justify-center mx-auto mb-1">
-                            <i class="fa fa-cloud text-red"></i>
-                        </div>
-                        <div class="text-dark font-medium text-xs">天气穿搭</div>
-                    </button>
-                </div>
-
-                <!-- 衣物分类 -->
-                <div class="mb-6">
-                    <h2 class="text-lg font-bold text-dark mb-3">衣物分类</h2>
-                    <div class="overflow-x-auto">
-                        <div class="flex space-x-2 pb-2">
-                            <button onclick="filterClothing('all')" class="category-btn glass rounded-full px-4 py-2 text-dark font-medium text-sm active" data-category="all">全部</button>
-                            <button onclick="filterClothing('top')" class="category-btn glass rounded-full px-4 py-2 text-dark font-medium text-sm" data-category="top">上衣</button>
-                            <button onclick="filterClothing('pants')" class="category-btn glass rounded-full px-4 py-2 text-dark font-medium text-sm" data-category="pants">裤子</button>
-                            <button onclick="filterClothing('skirt')" class="category-btn glass rounded-full px-4 py-2 text-dark font-medium text-sm" data-category="skirt">裙子</button>
-                            <button onclick="filterClothing('shoes')" class="category-btn glass rounded-full px-4 py-2 text-dark font-medium text-sm" data-category="shoes">鞋子</button>
-                            <button onclick="filterClothing('accessory')" class="category-btn glass rounded-full px-4 py-2 text-dark font-medium text-sm" data-category="accessory">配饰</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 衣物展示 -->
-                <div class="mb-6">
-                    <div class="flex justify-between items-center mb-3">
-                        <h2 class="text-lg font-bold text-dark">我的衣橱</h2>
-                        <span id="clothing-count" class="text-sm text-gray-500">0 件</span>
-                    </div>
-                    <div id="clothing-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                        <!-- 衣物卡片将通过JS渲染 -->
-                    </div>
-                    <div id="empty-wardrobe" class="text-center py-12 text-gray-500 hidden">
-                        <i class="fa fa-tshirt text-5xl mb-4"></i>
-                        <p>还没有添加衣物</p>
-                        <p class="text-sm">点击上方"添加衣物"开始</p>
-                    </div>
-                </div>
-
-                <!-- 推荐穿搭 -->
-                <div>
-                    <h2 class="text-lg font-bold text-dark mb-3">今日推荐</h2>
-                    <div id="outfit-recommendations" class="space-y-4">
-                        <!-- 推荐穿搭将通过JS渲染 -->
-                    </div>
-                </div>
-            </section>
-
-            <!-- 添加衣物页面 -->
-            <section id="add-clothing-section" class="page-section">
-                <div class="glass rounded-xl p-4 mb-4">
-                    <h2 class="text-xl font-bold text-dark mb-4">添加新衣物</h2>
-                    <form id="add-clothing-form" class="space-y-4">
-                        <div>
-                            <label class="block text-dark font-medium mb-1 text-sm">衣物名称</label>
-                            <input type="text" id="clothing-name" class="w-full px-4 py-2 rounded-lg glass border border-white/30" placeholder="如：白色T恤">
-                        </div>
-                        <div>
-                            <label class="block text-dark font-medium mb-1 text-sm">衣物类型</label>
-                            <select id="clothing-type" class="w-full px-4 py-2 rounded-lg glass border border-white/30">
-                                <option value="top">上衣</option>
-                                <option value="pants">裤子</option>
-                                <option value="skirt">裙子</option>
-                                <option value="shoes">鞋子</option>
-                                <option value="accessory">配饰</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-dark font-medium mb-1 text-sm">颜色</label>
-                            <select id="clothing-color" class="w-full px-4 py-2 rounded-lg glass border border-white/30">
-                                <option value="white">白色</option>
-                                <option value="black">黑色</option>
-                                <option value="gray">灰色</option>
-                                <option value="blue">蓝色</option>
-                                <option value="pink">粉色</option>
-                                <option value="green">绿色</option>
-                                <option value="yellow">黄色</option>
-                                <option value="purple">紫色</option>
-                                <option value="brown">棕色</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-dark font-medium mb-1 text-sm">风格</label>
-                            <select id="clothing-style" class="w-full px-4 py-2 rounded-lg glass border border-white/30">
-                                <option value="casual">休闲</option>
-                                <option value="sporty">运动</option>
-                                <option value="retro">复古</option>
-                                <option value="minimal">极简</option>
-                                <option value="street">街头</option>
-                                <option value="elegant">优雅</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-dark font-medium mb-1 text-sm">适用季节</label>
-                            <div class="flex flex-wrap gap-2">
-                                <label class="flex items-center">
-                                    <input type="checkbox" value="spring" class="season-checkbox mr-1">
-                                    <span class="text-sm">春</span>
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="checkbox" value="summer" class="season-checkbox mr-1">
-                                    <span class="text-sm">夏</span>
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="checkbox" value="autumn" class="season-checkbox mr-1">
-                                    <span class="text-sm">秋</span>
-                                </label>
-                                <label class="flex items-center">
-                                    <input type="checkbox" value="winter" class="season-checkbox mr-1">
-                                    <span class="text-sm">冬</span>
-                                </label>
-                            </div>
-                        </div>
-                        <div class="flex gap-3">
-                            <button type="submit" class="flex-1 bg-gradient-to-r from-primary to-secondary text-white font-bold py-3 rounded-lg">
-                                保存
-                            </button>
-                            <button type="button" onclick="showPage('home')" class="flex-1 glass py-3 rounded-lg">
-                                取消
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </section>
-
-            <!-- 一周穿搭页面 -->
-            <section id="weekly-outfit-section" class="page-section">
-                <h2 class="text-xl font-bold text-dark mb-4">一周穿搭计划</h2>
-                <div id="weekly-outfit-list" class="space-y-4">
-                    <!-- 一周穿搭将通过JS渲染 -->
-                </div>
-            </section>
-
-            <!-- 舞蹈穿搭页面 -->
-            <section id="dance-outfit-section" class="page-section">
-                <h2 class="text-xl font-bold text-dark mb-4">舞蹈课穿搭</h2>
-                <div id="dance-outfit-info" class="glass rounded-xl p-4 mb-4">
-                    <p class="text-gray-600 text-sm mb-2">您的舞蹈课安排：</p>
-                    <p id="dance-schedule" class="text-dark font-medium">尚未设置舞蹈课</p>
-                </div>
-                <div id="dance-outfit-list" class="space-y-4">
-                    <!-- 舞蹈穿搭将通过JS渲染 -->
-                </div>
-            </section>
-
-            <!-- 天气穿搭页面 -->
-            <section id="weather-outfit-section" class="page-section">
-                <h2 class="text-xl font-bold text-dark mb-4">天气穿搭推荐</h2>
-                <div class="glass rounded-xl p-4 mb-4">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p id="weather-date" class="text-gray-600 text-sm">今天</p>
-                            <p id="weather-temp" class="text-3xl font-bold text-dark">22°C</p>
-                            <p id="weather-condition" class="text-gray-500">晴天</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-sm text-gray-500">建议穿着</p>
-                            <p id="weather-suggestion" class="text-dark font-medium">轻薄舒适</p>
-                        </div>
-                    </div>
-                </div>
-                <div id="weather-outfit-list" class="space-y-4">
-                    <!-- 天气穿搭将通过JS渲染 -->
-                </div>
-            </section>
-
-            <!-- 我的页面 -->
-            <section id="profile-section" class="page-section">
-                <h2 class="text-xl font-bold text-dark mb-4">个人信息</h2>
-                <div id="profile-info" class="glass rounded-xl p-4 mb-4">
-                    <!-- 用户信息将通过JS渲染 -->
-                </div>
-                <button onclick="resetUserInfo()" class="w-full bg-red-500 text-white font-bold py-3 rounded-lg">
-                    重置所有数据
-                </button>
-            </section>
-        </main>
-
-        <!-- 底部导航 -->
-        <footer class="fixed bottom-0 left-0 right-0 glass border-t border-white/20 z-40">
-            <div class="flex justify-around items-center h-16">
-                <button onclick="showPage('home')" class="nav-item active flex flex-col items-center justify-center flex-1">
-                    <i class="fa fa-home text-xl"></i>
-                    <span class="text-xs mt-1">首页</span>
-                </button>
-                <button onclick="showPage('weekly-outfit')" class="nav-item flex flex-col items-center justify-center flex-1">
-                    <i class="fa fa-calendar text-xl"></i>
-                    <span class="text-xs mt-1">穿搭</span>
-                </button>
-                <button onclick="showPage('add-clothing')" class="nav-item flex flex-col items-center justify-center flex-1">
-                    <div class="w-12 h-12 bg-gradient-to-r from-primary to-secondary rounded-full flex items-center justify-center -mt-4">
-                        <i class="fa fa-plus text-white text-xl"></i>
-                    </div>
-                    <span class="text-xs mt-1">添加</span>
-                </button>
-                <button onclick="showPage('dance-outfit')" class="nav-item flex flex-col items-center justify-center flex-1">
-                    <i class="fa fa-music text-xl"></i>
-                    <span class="text-xs mt-1">舞蹈</span>
-                </button>
-                <button onclick="showPage('profile')" class="nav-item flex flex-col items-center justify-center flex-1">
-                    <i class="fa fa-user text-xl"></i>
-                    <span class="text-xs mt-1">我的</span>
-                </button>
-            </div>
-        </footer>
-    </div>
-
-    <!-- 删除确认模态框 -->
-    <div id="delete-modal" class="modal fixed inset-0 z-50 bg-black/50 items-center justify-center p-4">
-        <div class="glass rounded-xl p-6 max-w-sm w-full">
-            <h3 class="text-lg font-bold text-dark mb-4">确认删除</h3>
-            <p class="text-gray-600 mb-6">确定要删除这件衣物吗？</p>
-            <div class="flex gap-3">
-                <button onclick="confirmDelete()" class="flex-1 bg-red-500 text-white font-bold py-2 rounded-lg">删除</button>
-                <button onclick="closeModal()" class="flex-1 glass py-2 rounded-lg">取消</button>
-            </div>
+        <h1 class="text-2xl font-bold mb-2" style="color: var(--dark-black)">智能电子衣橱</h1>
+        <p class="text-sm text-gray-500">AI智能搭配，让每天都是最佳状态</p>
+      </div>
+      <form id="userInfoForm" class="glass-card p-6 space-y-4 fade-in">
+        <div>
+          <label class="block text-sm font-medium mb-1">身高 (cm) <span class="text-red-500">*</span></label>
+          <input type="number" id="height" required class="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-pink-300 outline-none" placeholder="165">
         </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">体重 (kg) <span class="text-red-500">*</span></label>
+          <input type="number" id="weight" required class="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-pink-300 outline-none" placeholder="50">
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">身材类型 <span class="text-red-500">*</span></label>
+          <select id="bodyType" required class="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-pink-300 outline-none">
+            <option value="">请选择</option>
+            <option value="pear">🍐 梨型</option>
+            <option value="apple">🍎 苹果型</option>
+            <option value="h">📏 H型</option>
+            <option value="hourglass">⏳ 沙漏型</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">风格偏好 <span class="text-red-500">*</span></label>
+          <select id="stylePreference" required class="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-pink-300 outline-none">
+            <option value="">请选择</option>
+            <option value="casual">休闲风</option>
+            <option value="sporty">运动风</option>
+            <option value="retro">复古风</option>
+            <option value="minimal">极简风</option>
+            <option value="street">街头风</option>
+            <option value="elegant">优雅风</option>
+            <option value="oldMoney">老钱风</option>
+            <option value="american">美式风</option>
+            <option value="korean">韩系风</option>
+          </select>
+        </div>
+        <div class="border-t pt-4">
+          <label class="block text-sm font-medium mb-2">🏋️ 今天是否健身</label>
+          <div class="flex items-center justify-between">
+            <span class="text-sm">是否健身</span>
+            <input type="checkbox" id="hasFitness" class="checkbox-custom">
+          </div>
+          <div id="fitnessDetails" class="hidden space-y-2 mt-2 pl-2 border-l-2 border-[#D4846A]/40">
+            <select id="fitnessType" class="w-full px-3 py-2 rounded-lg border text-sm">
+              <option value="">健身类型</option>
+              <option value="strength">力量训练</option>
+              <option value="cardio">有氧运动</option>
+              <option value="yoga">瑜伽</option>
+            </select>
+            <div class="flex items-center justify-between">
+              <span class="text-xs">是否有氧运动</span>
+              <input type="checkbox" id="hasCardio" class="checkbox-custom">
+            </div>
+          </div>
+        </div>
+        <div class="border-t pt-4">
+          <label class="block text-sm font-medium mb-2">💃 明天舞蹈课安排</label>
+          <div class="flex items-center justify-between">
+            <span class="text-sm">明天是否有舞蹈课</span>
+            <input type="checkbox" id="hasDance" class="checkbox-custom">
+          </div>
+          <div id="danceDetails" class="hidden space-y-2 mt-2 pl-2 border-l-2 border-blue-300">
+            <select id="danceType" class="w-full px-3 py-2 rounded-lg border text-sm">
+              <option value="">舞蹈类型</option>
+              <option value="ballet">芭蕾</option>
+              <option value="jazz">爵士</option>
+              <option value="hiphop">街舞</option>
+              <option value="latin">拉丁</option>
+            </select>
+            <div class="flex items-center justify-between">
+              <span class="text-xs">是否工作日课程</span>
+              <input type="checkbox" id="danceWorkday" class="checkbox-custom" checked>
+            </div>
+          </div>
+        </div>
+        <div class="border-t pt-4">
+          <div class="flex items-center justify-between">
+            <span class="text-sm">🚲 是否骑自行车上班</span>
+            <input type="checkbox" id="commuteByBike" class="checkbox-custom">
+          </div>
+        </div>
+        <button type="submit" class="gradient-button w-full text-white py-3 rounded-lg font-medium mt-4">
+          开始使用 <i class="fas fa-arrow-right ml-2"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== 主应用 ==================== -->
+  <div id="mainApp" class="hidden">
+
+    <!-- ===== 首页 ===== -->
+    <div id="homePage" class="page active">
+      <header class="sticky top-0 z-10 glass-card mx-4 mt-4 p-4">
+        <div class="flex justify-between items-center">
+          <div>
+            <h2 class="font-bold text-lg">今日穿搭</h2>
+            <p class="text-xs text-gray-500" id="currentDate"></p>
+          </div>
+          <div id="weatherInfo" class="flex items-center space-x-2">
+            <div class="loading"></div>
+            <span class="text-xs">获取中...</span>
+          </div>
+        </div>
+      </header>
+      <main class="p-4 space-y-4 pb-24">
+        <section class="glass-card p-4">
+          <h3 class="font-bold mb-3"><i class="fas fa-magic mr-2 text-[#8B5E3C]"></i>AI推荐</h3>
+          <div id="todayOutfit" class="grid grid-cols-3 gap-3"></div>
+          <div class="mt-3 p-3 bg-gradient-to-r from-[#D4846A]/10 to-[#A8B5A0]/10 rounded-lg">
+            <p class="text-xs text-gray-600" id="outfitNotes">加载中...</p>
+          </div>
+        </section>
+        <section class="glass-card p-4">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="font-bold"><i class="fab fa-xiaohongshu mr-2 text-red-500"></i>博主推荐</h3>
+            <button onclick="showBloggerUpdates()" class="text-xs text-[#D4846A]">更多 <i class="fas fa-chevron-right"></i></button>
+          </div>
+          <div id="bloggerRecommend"></div>
+        </section>
+      </main>
     </div>
 
-    <script>
-        // 数据存储
-        let userInfo = null;
-        let clothingList = [];
-        let currentFilter = 'all';
-        let deleteTargetId = null;
+    <!-- ===== 衣橱页 ===== -->
+    <div id="wardrobePage" class="page">
+      <header class="sticky top-0 z-10 glass-card mx-4 mt-4 p-4">
+        <h2 class="font-bold text-lg">我的衣橱</h2>
+        <p class="text-xs text-gray-500">共 <span id="totalClothes">0</span> 件</p>
+      </header>
+      <main class="p-4 space-y-4 pb-24">
+        <div class="flex space-x-2 overflow-x-auto pb-2">
+          <button onclick="filterClothes('all')" class="category-btn active px-4 py-2 rounded-full gradient-button text-white text-sm">全部</button>
+          <button onclick="filterClothes('top')" class="category-btn px-4 py-2 rounded-full bg-white text-sm">上衣</button>
+          <button onclick="filterClothes('pants')" class="category-btn px-4 py-2 rounded-full bg-white text-sm">裤子</button>
+          <button onclick="filterClothes('skirt')" class="category-btn px-4 py-2 rounded-full bg-white text-sm">裙子</button>
+          <button onclick="filterClothes('shoes')" class="category-btn px-4 py-2 rounded-full bg-white text-sm">鞋子</button>
+        </div>
+        <div id="clothesGrid" class="grid grid-cols-3 gap-3"></div>
+      </main>
+    </div>
 
-        // 页面加载
-        document.addEventListener('DOMContentLoaded', function() {
-            checkUserInfo();
-            bindEvents();
+    <!-- ===== 添加衣物页 ===== -->
+    <div id="addPage" class="page">
+      <header class="sticky top-0 z-10 glass-card mx-4 mt-4 p-4">
+        <h2 class="font-bold text-lg">添加衣物</h2>
+      </header>
+      <main class="p-4 pb-24">
+        <div class="glass-card p-6">
+          <button onclick="openCamera()" class="w-full mb-6 p-8 border-2 border-dashed border-[#D4846A]/40 rounded-xl bg-gradient-to-br from-[#D4846A]/10 to-[#A8B5A0]/10">
+            <i class="fas fa-camera text-4xl mb-3 text-[#8B5E3C]"></i>
+            <p class="font-medium">拍照识别</p>
+          </button>
+          <form id="addClothingForm" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium mb-1">名称</label>
+              <input type="text" id="clothName" required class="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-pink-300 outline-none" placeholder="白色T恤">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">类型</label>
+              <select id="clothType" required class="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-pink-300 outline-none">
+                <option value="">选择类型</option>
+                <option value="top">上衣</option>
+                <option value="pants">裤子</option>
+                <option value="skirt">裙子</option>
+                <option value="shoes">鞋子</option>
+                <option value="accessory">配饰</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">颜色</label>
+              <input type="text" id="clothColor" class="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-pink-300 outline-none" placeholder="白色">
+            </div>
+            <div>
+              <label class="block text-sm font-medium mb-1">风格</label>
+              <select id="clothStyle" class="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-pink-300 outline-none">
+                <option value="">选择风格</option>
+                <option value="casual">休闲</option>
+                <option value="sporty">运动</option>
+                <option value="retro">复古</option>
+                <option value="minimal">极简</option>
+                <option value="street">街头</option>
+                <option value="elegant">优雅</option>
+              </select>
+            </div>
+            <button type="submit" class="gradient-button w-full text-white py-3 rounded-lg font-medium">
+              <i class="fas fa-plus mr-2"></i>添加
+            </button>
+          </form>
+        </div>
+      </main>
+    </div>
+
+    <!-- ===== 一周计划页 ===== -->
+    <div id="weeklyPage" class="page">
+      <header class="sticky top-0 z-10 glass-card mx-4 mt-4 p-4">
+        <h2 class="font-bold text-lg">一周穿搭计划</h2>
+        <p class="text-xs text-gray-500" id="weeklyHint">点击日期可重新生成搭配</p>
+      </header>
+      <main class="p-4 space-y-3 pb-24">
+        <div id="weeklyPlan"></div>
+      </main>
+    </div>
+
+    <!-- ===== 每日搭配选择页 ===== -->
+    <div id="dailySelectorPage" class="page">
+      <header class="sticky top-0 z-10 glass-card mx-4 mt-4 p-4">
+        <div class="flex items-center">
+          <button onclick="navigateTo('weekly')" class="mr-3"><i class="fas fa-arrow-left"></i></button>
+          <div>
+            <h2 class="font-bold text-lg" id="selectorDate">今日搭配</h2>
+            <p class="text-xs text-gray-500">选择最适合您的穿搭方案</p>
+          </div>
+        </div>
+      </header>
+      <main class="p-4 space-y-4 pb-24">
+        <!-- 场景选择 -->
+        <section class="glass-card p-4">
+          <h3 class="font-bold mb-3">📅 今日场景</h3>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="flex items-center space-x-2 p-3 rounded-lg border cursor-pointer hover:bg-pink-50">
+              <input type="radio" name="occasion" value="daily" class="checkbox-custom" checked>
+              <span class="text-sm">日常休闲</span>
+            </label>
+            <label class="flex items-center space-x-2 p-3 rounded-lg border cursor-pointer hover:bg-blue-50">
+              <input type="radio" name="occasion" value="work" class="checkbox-custom">
+              <span class="text-sm">工作通勤</span>
+            </label>
+            <label class="flex items-center space-x-2 p-3 rounded-lg border cursor-pointer hover:bg-green-50">
+              <input type="radio" name="occasion" value="fitness" class="checkbox-custom">
+              <span class="text-sm">健身运动</span>
+            </label>
+            <label class="flex items-center space-x-2 p-3 rounded-lg border cursor-pointer hover:bg-purple-50">
+              <input type="radio" name="occasion" value="date" class="checkbox-custom">
+              <span class="text-sm">约会聚餐</span>
+            </label>
+          </div>
+        </section>
+
+        <!-- AI推荐选项 -->
+        <section class="glass-card p-4">
+          <div class="flex justify-between items-center mb-3">
+            <h3 class="font-bold">🤖 AI推荐方案</h3>
+            <button onclick="generateAIOption()" class="text-xs text-[#D4846A]"><i class="fas fa-sync-alt mr-1"></i>换一批</button>
+          </div>
+          <div id="aiOptions" class="space-y-3">
+            <div class="text-center py-8 text-gray-400">
+              <div class="loading mx-auto mb-2"></div>
+              <p class="text-xs">AI正在为您生成搭配方案...</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 确认按钮 -->
+        <button onclick="confirmDailyOutfit()" class="w-full gradient-button text-white py-3 rounded-lg font-medium shadow-lg">
+          <i class="fas fa-check mr-2"></i>确认今日穿搭
+        </button>
+      </main>
+    </div>
+
+    <!-- ===== 个人中心 ===== -->
+    <div id="profilePage" class="page">
+      <header class="sticky top-0 z-10 glass-card mx-4 mt-4 p-4">
+        <h2 class="font-bold text-lg">个人中心</h2>
+      </header>
+      <main class="p-4 space-y-4 pb-24">
+        <div class="glass-card p-4">
+          <div class="flex items-center space-x-3 mb-4">
+            <div class="w-16 h-16 rounded-full gradient-button flex items-center justify-center">
+              <i class="fas fa-user text-white text-2xl"></i>
+            </div>
+            <div>
+              <p class="font-bold">用户</p>
+              <p class="text-xs text-gray-500" id="profileBodyType">--型</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="bg-pink-50 p-2 rounded"><p class="text-gray-500">身高</p><p class="font-bold" id="profileHeight">-- cm</p></div>
+            <div class="bg-blue-50 p-2 rounded"><p class="text-gray-500">体重</p><p class="font-bold" id="profileWeight">-- kg</p></div>
+          </div>
+        </div>
+        <div class="glass-card">
+          <button onclick="editUserInfo()" class="w-full p-4 flex items-center justify-between border-b">
+            <span><i class="fas fa-edit mr-3 text-[#8B5E3C]"></i>编辑信息</span>
+            <i class="fas fa-chevron-right text-gray-400"></i>
+          </button>
+          <button onclick="checkWeeklyUpdate()" class="w-full p-4 flex items-center justify-between border-b">
+            <span><i class="fas fa-calendar-check mr-3 text-green-400"></i>更新周计划</span>
+            <span id="weeklyBadge" class="text-xs bg-red-500 text-white px-2 py-0.5 rounded-full hidden">新</span>
+          </button>
+          <button onclick="clearAllData()" class="w-full p-4 text-red-500">
+            <i class="fas fa-trash-alt mr-2"></i>清除数据
+          </button>
+        </div>
+      </main>
+    </div>
+
+    <!-- ===== 底部导航 ===== -->
+    <nav class="fixed bottom-0 left-0 right-0 glass-card px-2 py-1 z-50">
+      <div class="flex justify-around">
+        <button onclick="navigateTo('home')" class="nav-item active flex flex-col items-center py-2 px-3" data-page="home">
+          <i class="fas fa-home text-lg"></i>
+          <span class="text-[10px]">首页</span>
+        </button>
+        <button onclick="navigateTo('wardrobe')" class="nav-item flex flex-col items-center py-2 px-3" data-page="wardrobe">
+          <i class="fas fa-shirt text-lg"></i>
+          <span class="text-[10px]">衣橱</span>
+        </button>
+        <button onclick="navigateTo('add')" class="nav-item flex flex-col items-center -mt-5" data-page="add">
+          <div class="w-14 h-14 rounded-full gradient-button flex items-center justify-center shadow-lg">
+            <i class="fas fa-plus text-white text-xl"></i>
+          </div>
+        </button>
+        <button onclick="navigateTo('weekly')" class="nav-item flex flex-col items-center py-2 px-3" data-page="weekly">
+          <i class="fas fa-calendar-check text-lg"></i>
+          <span class="text-[10px]">计划</span>
+        </button>
+        <button onclick="navigateTo('profile')" class="nav-item flex flex-col items-center py-2 px-3" data-page="profile">
+          <i class="fas fa-user text-lg"></i>
+          <span class="text-[10px]">我的</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- ==================== JavaScript ==================== -->
+  <script>
+    // ==================== 存储管理 ====================
+    const Storage = {
+      get(key) { try { const d = localStorage.getItem(key); return d ? JSON.parse(d) : null; } catch(e) { return null; } },
+      set(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e) {} },
+      remove(key) { localStorage.removeItem(key); }
+    };
+
+    // ==================== 天气API ====================
+    async function fetchWeather() {
+      try {
+        const pos = await new Promise((resolve, reject) => {
+          if (!navigator.geolocation) return reject(new Error('不支持'));
+          navigator.geolocation.getCurrentPosition(
+            p => resolve({ lat: p.coords.latitude, lon: p.coords.longitude }),
+            reject,
+            { enableHighAccuracy: true, timeout: 8000 }
+          );
         });
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${pos.lat}&longitude=${pos.lon}&current_weather=true&timezone=auto`);
+        const data = await res.json();
+        const w = data.current_weather;
+        const icons = { 0:'☀️', 1:'⛅', 2:'☁️', 3:'🌧️', 45:'🌫️', 51:'🌦️', 61:'🌧️', 71:'❄️', 95:'⛈️' };
+        const conditions = { 0:'晴', 1:'多云', 2:'阴', 3:'小雨', 45:'雾', 51:'毛毛雨', 61:'小雨', 71:'雪', 95:'雷雨' };
+        return {
+          temp: Math.round(w.temperature),
+          icon: icons[w.weathercode] || '🌤️',
+          condition: conditions[w.weathercode] || '未知',
+          code: w.weathercode
+        };
+      } catch(e) {
+        console.log('天气获取失败，使用默认值');
+        return { temp: 22, icon: '☀️', condition: '晴', code: 0 };
+      }
+    }
 
-        // 检查用户信息
-        function checkUserInfo() {
-            const stored = localStorage.getItem('userInfo');
-            if (stored) {
-                userInfo = JSON.parse(stored);
-                document.getElementById('welcome-page').classList.remove('active');
-                document.getElementById('main-page').classList.add('active');
-                loadClothingList();
-                renderClothingGrid();
-                renderRecommendations();
-                renderProfile();
-            }
+    // ==================== AI搭配引擎 ====================
+    const AIEngine = {
+      // 根据场景、天气、用户偏好生成搭配
+      generateOutfits(scenario, weather, userInfo, clothes) {
+        const tops = clothes.filter(c => c.type === 'top');
+        const bottoms = clothes.filter(c => c.type === 'pants' || c.type === 'skirt');
+        const shoes = clothes.filter(c => c.type === 'shoes');
+
+        if (tops.length === 0 || bottoms.length === 0 || shoes.length === 0) {
+          return [];
         }
 
-        // 绑定事件
-        function bindEvents() {
-            // 用户信息表单
-            const form = document.getElementById('user-info-form');
-            const bodyTypeBtns = document.querySelectorAll('.body-type-btn');
-            const styleBtns = document.querySelectorAll('.style-btn');
-            let selectedBodyType = '';
-            const selectedStyles = [];
+        const options = [];
+        // 生成3种不同风格的搭配
+        for (let i = 0; i < 3; i++) {
+          const top = tops[Math.floor(Math.random() * tops.length)];
+          const bottom = bottoms[Math.floor(Math.random() * bottoms.length)];
+          const shoe = shoes[Math.floor(Math.random() * shoes.length)];
 
-            bodyTypeBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    bodyTypeBtns.forEach(b => b.classList.remove('bg-white/50'));
-                    this.classList.add('bg-white/50');
-                    selectedBodyType = this.dataset.type;
-                });
-            });
+          let style = '';
+          let note = '';
 
-            styleBtns.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const style = this.dataset.style;
-                    if (selectedStyles.includes(style)) {
-                        const index = selectedStyles.indexOf(style);
-                        selectedStyles.splice(index, 1);
-                        this.classList.remove('bg-white/50');
-                    } else {
-                        selectedStyles.push(style);
-                        this.classList.add('bg-white/50');
-                    }
-                });
-            });
+          // 根据场景和天气调整风格
+          if (scenario === 'fitness') {
+            style = '运动舒适';
+            note = '健身运动专用，透气吸汗';
+          } else if (scenario === 'work') {
+            style = '干练职场';
+            note = '适合工作场合，专业得体';
+          } else if (scenario === 'date') {
+            style = '浪漫约会';
+            note = '约会聚餐首选，精致优雅';
+          } else {
+            style = ['清新简约', '休闲随性', '时尚潮流'][i];
+            note = ['日常舒适，轻松自在', '随性自然，惬意时光', '潮流前沿，个性张扬'][i];
+          }
 
-            form.addEventListener('submit', function(e) {
-                e.preventDefault();
-                userInfo = {
-                    height: document.getElementById('height').value,
-                    weight: document.getElementById('weight').value,
-                    bodyType: selectedBodyType,
-                    stylePreferences: selectedStyles,
-                    danceClass: {
-                        type: document.getElementById('dance-type').value,
-                        day: document.getElementById('dance-day').value,
-                        time: document.getElementById('dance-time').value
-                    },
-                    commute: {
-                        byBike: document.getElementById('by-bike').checked,
-                        hasGym: document.getElementById('has-gym').checked
-                    }
-                };
-                localStorage.setItem('userInfo', JSON.stringify(userInfo));
-                document.getElementById('welcome-page').classList.remove('active');
-                document.getElementById('main-page').classList.add('active');
-                renderProfile();
-            });
+          // 考虑天气因素
+          if (weather && weather.temp < 15) {
+            note += ' | 注意保暖';
+          } else if (weather && weather.code >= 51 && weather.code <= 67) {
+            note += ' | 雨天记得带伞';
+          }
 
-            // 添加衣物表单
-            document.getElementById('add-clothing-form').addEventListener('submit', function(e) {
-                e.preventDefault();
-                addClothing();
-            });
+          // 考虑用户活动
+          if (userInfo.hasDance) {
+            note += ' | 舞蹈课搭配已考虑';
+          }
+
+          options.push({
+            id: `option_${i}_${Date.now()}`,
+            items: [top, bottom, shoe],
+            style,
+            note,
+            score: Math.floor(Math.random() * 20) + 80 // 模拟评分
+          });
         }
 
-        // 页面切换
-        function showPage(pageName) {
-            // 隐藏所有页面
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+        return options;
+      }
+    };
 
-            // 显示目标页面
-            if (pageName === 'home') {
-                document.getElementById('main-page').classList.add('active');
-                document.getElementById('home-section').classList.add('active');
-            } else if (pageName === 'add-clothing') {
-                document.getElementById('main-page').classList.add('active');
-                document.getElementById('add-clothing-section').classList.add('active');
-            } else if (pageName === 'weekly-outfit') {
-                document.getElementById('main-page').classList.add('active');
-                document.getElementById('weekly-outfit-section').classList.add('active');
-                renderWeeklyOutfit();
-            } else if (pageName === 'dance-outfit') {
-                document.getElementById('main-page').classList.add('active');
-                document.getElementById('dance-outfit-section').classList.add('active');
-                renderDanceOutfit();
-            } else if (pageName === 'weather-outfit') {
-                document.getElementById('main-page').classList.add('active');
-                document.getElementById('weather-outfit-section').classList.add('active');
-                renderWeatherOutfit();
-            } else if (pageName === 'profile') {
-                document.getElementById('main-page').classList.add('active');
-                document.getElementById('profile-section').classList.add('active');
-            }
+    // ==================== 周日提醒检查 ====================
+    function checkWeeklyReminder() {
+      const today = new Date();
+      const dayOfWeek = today.getDay(); // 0=Sunday
+      const lastUpdate = Storage.get('lastWeeklyUpdate');
 
-            // 更新底部导航
-            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-            const navMap = {
-                'home': 0,
-                'weekly-outfit': 1,
-                'add-clothing': 2,
-                'dance-outfit': 3,
-                'profile': 4
-            };
-            if (navMap[pageName] !== undefined) {
-                document.querySelectorAll('.nav-item')[navMap[pageName]].classList.add('active');
-            }
+      // 如果是周日，或者距离上次更新超过7天
+      if (dayOfWeek === 0 || !lastUpdate || (today - new Date(lastUpdate)) > 7 * 24 * 60 * 60 * 1000) {
+        const badge = document.getElementById('weeklyBadge');
+        if (badge) {
+          badge.classList.remove('hidden');
         }
+        return true;
+      }
+      return false;
+    }
 
-        // 加载衣物列表
-        function loadClothingList() {
-            const stored = localStorage.getItem('clothingList');
-            if (stored) {
-                clothingList = JSON.parse(stored);
-            }
-        }
+    function showWeeklyUpdateNotification() {
+      const today = new Date();
+      const dayNames = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
 
-        // 保存衣物列表
-        function saveClothingList() {
-            localStorage.setItem('clothingList', JSON.stringify(clothingList));
-        }
+      alert(`📅 新的一周开始啦！\n\n今天是${dayNames[today.getDay()]}，建议您：\n• 更新下周穿搭计划\n• 根据天气预报调整\n• 检查衣物是否需要清洗\n\n点击"更新周计划"开始吧！`);
+    }
 
-        // 添加衣物
-        function addClothing() {
-            const name = document.getElementById('clothing-name').value;
-            const type = document.getElementById('clothing-type').value;
-            const color = document.getElementById('clothing-color').value;
-            const style = document.getElementById('clothing-style').value;
+    function checkWeeklyUpdate() {
+      const lastUpdate = Storage.get('lastWeeklyUpdate');
+      const today = new Date();
 
-            const seasons = [];
-            document.querySelectorAll('.season-checkbox:checked').forEach(cb => {
-                seasons.push(cb.value);
-            });
+      if (lastUpdate) {
+        const daysSince = Math.floor((today - new Date(lastUpdate)) / (24 * 60 * 60 * 1000));
+        alert(`上次更新：${daysSince}天前\n\n现在将为您重新生成下周的穿搭计划...`);
+      } else {
+        alert('这将是您第一次生成周穿搭计划！\n\n系统会根据您的偏好和天气智能搭配。');
+      }
 
-            if (!name) {
-                alert('请输入衣物名称');
-                return;
-            }
+      // 执行更新
+      generateWeeklyPlan(true);
+      Storage.set('lastWeeklyUpdate', today.toISOString());
 
-            const clothing = {
-                id: Date.now().toString(),
-                name: name,
-                type: type,
-                color: color,
-                style: style,
-                seasons: seasons,
-                addDate: new Date().toISOString()
-            };
+      // 隐藏徽章
+      const badge = document.getElementById('weeklyBadge');
+      if (badge) badge.classList.add('hidden');
+    }
 
-            clothingList.push(clothing);
-            saveClothingList();
+    // ==================== 初始化 ====================
+    window.addEventListener('load', () => {
+      const userInfo = Storage.get('userInfo');
+      if (userInfo) {
+        showMainApp();
+      }
+      updateDate();
+      initSampleData();
+    });
 
-            // 重置表单
-            document.getElementById('add-clothing-form').reset();
+    function updateDate() {
+      const el = document.getElementById('currentDate');
+      if (el) {
+        const now = new Date();
+        el.textContent = now.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' });
+      }
+    }
 
-            // 返回首页并渲染
-            showPage('home');
-            renderClothingGrid();
-            renderRecommendations();
-        }
+    // ==================== 表单提交 ====================
+    document.getElementById('userInfoForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const userInfo = {
+        height: document.getElementById('height').value,
+        weight: document.getElementById('weight').value,
+        bodyType: document.getElementById('bodyType').value,
+        stylePreference: document.getElementById('stylePreference').value,
+        hasFitness: document.getElementById('hasFitness').checked,
+        fitnessType: document.getElementById('fitnessType').value,
+        hasCardio: document.getElementById('hasCardio').checked,
+        hasDance: document.getElementById('hasDance').checked,
+        danceType: document.getElementById('danceType').value,
+        danceWorkday: document.getElementById('danceWorkday').checked,
+        commuteByBike: document.getElementById('commuteByBike').checked,
+        createdAt: new Date().toISOString()
+      };
+      Storage.set('userInfo', userInfo);
+      showMainApp();
+    });
 
-        // 筛选衣物
-        function filterClothing(category) {
-            currentFilter = category;
-            document.querySelectorAll('.category-btn').forEach(btn => {
-                btn.classList.remove('active', 'bg-white/50');
-                if (btn.dataset.category === category) {
-                    btn.classList.add('active', 'bg-white/50');
-                }
-            });
-            renderClothingGrid();
-        }
+    document.getElementById('hasFitness').addEventListener('change', function() {
+      const d = document.getElementById('fitnessDetails');
+      if (d) d.classList.toggle('hidden', !this.checked);
+    });
 
-        // 渲染衣物网格
-        function renderClothingGrid() {
-            const grid = document.getElementById('clothing-grid');
-            const empty = document.getElementById('empty-wardrobe');
-            const count = document.getElementById('clothing-count');
+    document.getElementById('hasDance').addEventListener('change', function() {
+      const d = document.getElementById('danceDetails');
+      if (d) d.classList.toggle('hidden', !this.checked);
+    });
 
-            let filtered = clothingList;
-            if (currentFilter !== 'all') {
-                filtered = clothingList.filter(c => c.type === currentFilter);
-            }
+    // ==================== 显示主应用 ====================
+    async function showMainApp() {
+      document.getElementById('welcomePage').classList.remove('active');
+      setTimeout(() => { document.getElementById('welcomePage').style.display = 'none'; }, 100);
 
-            count.textContent = `${clothingList.length} 件`;
+      const mainApp = document.getElementById('mainApp');
+      mainApp.style.display = 'block';
+      mainApp.classList.add('fade-in');
 
-            if (filtered.length === 0) {
-                grid.innerHTML = '';
-                empty.classList.remove('hidden');
-                return;
-            }
+      // 检查周日提醒
+      if (checkWeeklyReminder()) {
+        setTimeout(showWeeklyUpdateNotification, 1000);
+      }
 
-            empty.classList.add('hidden');
+      // 获取天气
+      const weather = await fetchWeather();
+      updateWeatherDisplay(weather);
 
-            const typeIcons = {
-                'top': 'fa-tshirt',
-                'pants': 'fa-socks',
-                'skirt': 'fa-vest',
-                'shoes': 'fa-shoe-prints',
-                'accessory': 'fa-gem'
-            };
+      // 生成内容
+      generateTodayOutfit(weather);
+      generateBloggerRecommend();
+      renderClothesGrid();
+      updateProfileDisplay();
+      generateWeeklyPlan();
+    }
 
-            grid.innerHTML = filtered.map(item => `
-                <div class="glass rounded-xl overflow-hidden card-hover transition-all relative">
-                    <div class="h-32 bg-gray-100 flex items-center justify-center">
-                        <i class="fa ${typeIcons[item.type] || 'fa-tshirt'} text-3xl text-gray-400"></i>
-                    </div>
-                    <div class="p-3">
-                        <h3 class="font-medium text-dark text-sm">${item.name}</h3>
-                        <p class="text-xs text-gray-500">${getTypeName(item.type)}</p>
-                    </div>
-                    <button onclick="showDeleteModal('${item.id}')" class="absolute top-2 right-2 w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center">
-                        <i class="fa fa-trash text-xs"></i>
-                    </button>
-                </div>
-            `).join('');
-        }
+    function updateWeatherDisplay(weather) {
+      const el = document.getElementById('weatherInfo');
+      if (el) {
+        el.innerHTML = `<span class="text-2xl">${weather.icon}</span><div class="text-right"><p class="font-bold">${weather.temp}°C</p><p class="text-xs text-gray-500">${weather.condition}</p></div>`;
+      }
+    }
 
-        // 显示删除模态框
-        function showDeleteModal(id) {
-            deleteTargetId = id;
-            document.getElementById('delete-modal').classList.add('active');
-        }
+    // ==================== 页面导航 ====================
+    function navigateTo(page) {
+      document.querySelectorAll('#mainApp .page').forEach(p => p.classList.remove('active'));
+      const target = document.getElementById(page + 'Page');
+      if (target) {
+        target.classList.add('active');
+        target.classList.add('fade-in');
+      }
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+        if (item.dataset.page === page) item.classList.add('active');
+      });
 
-        // 关闭模态框
-        function closeModal() {
-            document.getElementById('delete-modal').classList.remove('active');
-            deleteTargetId = null;
-        }
+      // 如果进入每日选择页，生成AI选项
+      if (page === 'dailySelector') {
+        generateAIOption();
+      }
+    }
 
-        // 确认删除
-        function confirmDelete() {
-            if (deleteTargetId) {
-                clothingList = clothingList.filter(c => c.id !== deleteTargetId);
-                saveClothingList();
-                renderClothingGrid();
-                renderRecommendations();
-            }
-            closeModal();
-        }
+    // ==================== 生成今日穿搭 ====================
+    function generateTodayOutfit(weather) {
+      const clothes = Storage.get('clothes') || [];
+      const userInfo = Storage.get('userInfo') || {};
+      const container = document.getElementById('todayOutfit');
+      const notesEl = document.getElementById('outfitNotes');
 
-        // 获取类型名称
-        function getTypeName(type) {
-            const names = {
-                'top': '上衣',
-                'pants': '裤子',
-                'skirt': '裙子',
-                'shoes': '鞋子',
-                'accessory': '配饰'
-            };
-            return names[type] || type;
-        }
+      if (!container) return;
 
-        // 渲染推荐穿搭
-        function renderRecommendations() {
-            const container = document.getElementById('outfit-recommendations');
-            if (clothingList.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-8 text-gray-500">
-                        <p>添加至少一件上衣和一条裤子来获取推荐</p>
-                    </div>
-                `;
-                return;
-            }
+      const tops = clothes.filter(c => c.type === 'top');
+      const bottoms = clothes.filter(c => c.type === 'pants' || c.type === 'skirt');
+      const shoes = clothes.filter(c => c.type === 'shoes');
 
-            const tops = clothingList.filter(c => c.type === 'top');
-            const pants = clothingList.filter(c => c.type === 'pants');
-            const shoes = clothingList.filter(c => c.type === 'shoes');
+      if (tops.length > 0 && bottoms.length > 0 && shoes.length > 0) {
+        const top = tops[Math.floor(Math.random() * tops.length)];
+        const bottom = bottoms[Math.floor(Math.random() * bottoms.length)];
+        const shoe = shoes[Math.floor(Math.random() * shoes.length)];
 
-            if (tops.length === 0 || pants.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-8 text-gray-500">
-                        <p>请添加上衣和裤子以获取穿搭推荐</p>
-                    </div>
-                `;
-                return;
-            }
+        container.innerHTML = `
+          <div class="bg-white rounded-lg p-2 text-center">
+            <div class="aspect-square bg-gradient-to-br from-[#D4846A]/20 to-[#A8B5A0]/20 rounded-lg mb-2 flex items-center justify-center">
+              <i class="fas fa-tshirt text-2xl text-[#8B5E3C]"></i>
+            </div>
+            <p class="text-xs font-medium truncate">${top.name}</p>
+          </div>
+          <div class="bg-white rounded-lg p-2 text-center">
+            <div class="aspect-square bg-gradient-to-br from-[#A8B5A0]/20 to-[#D4846A]/15 rounded-lg mb-2 flex items-center justify-center">
+              <i class="fas fa-user text-2xl text-[#A8B5A0]"></i>
+            </div>
+            <p class="text-xs font-medium truncate">${bottom.name}</p>
+          </div>
+          <div class="bg-white rounded-lg p-2 text-center">
+            <div class="aspect-square bg-gradient-to-br from-[#D4846A]/25 to-[#D4846A]/15 rounded-lg mb-2 flex items-center justify-center">
+              <i class="fas fa-shoe-prints text-2xl text-[#D4846A]"></i>
+            </div>
+            <p class="text-xs font-medium truncate">${shoe.name}</p>
+          </div>
+        `;
 
-            // 生成推荐组合
-            const recommendations = [];
-            for (let i = 0; i < Math.min(3, tops.length); i++) {
-                const top = tops[i];
-                const pant = pants[i % pants.length];
-                const shoe = shoes[i % shoes.length] || null;
+        let notes = '适合日常出行';
+        if (userInfo.hasDance) notes += '，舞蹈课专属';
+        if (userInfo.hasFitness) notes += '，健身运动风';
+        if (weather && weather.temp < 15) notes += '，注意保暖';
+        if (notesEl) notesEl.textContent = notes;
+      } else {
+        container.innerHTML = '<div class="col-span-3 text-center py-6 text-gray-400"><i class="fas fa-inbox text-3xl mb-2"></i><p class="text-xs">请先添加衣物</p></div>';
+      }
+    }
 
-                recommendations.push({
-                    name: `${top.name} + ${pant.name}`,
-                    top: top,
-                    pant: pant,
-                    shoe: shoe,
-                    occasion: '日常穿搭'
-                });
-            }
+    // ==================== 每日搭配选择器 ====================
+    let currentSelectedOption = null;
 
-            container.innerHTML = recommendations.map(rec => `
-                <div class="glass rounded-xl p-4">
-                    <h3 class="font-bold text-dark mb-2">${rec.name}</h3>
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="text-xs bg-primary/20 text-primary px-2 py-1 rounded-full">${rec.occasion}</span>
-                    </div>
-                    <p class="text-sm text-gray-500">
-                        上衣: ${rec.top.name} | 裤子: ${rec.pant.name}
-                        ${rec.shoe ? ` | 鞋子: ${rec.shoe.name}` : ''}
-                    </p>
-                </div>
-            `).join('');
-        }
+    function openDailySelector(dayIndex) {
+      const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+      const today = new Date();
+      const targetDay = new Date(today);
+      targetDay.setDate(today.getDate() + (dayIndex !== undefined ? dayIndex : 0));
 
-        // 渲染一周穿搭
-        function renderWeeklyOutfit() {
-            const container = document.getElementById('weekly-outfit-list');
-            const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+      document.getElementById('selectorDate').textContent =
+        `${targetDay.getMonth() + 1}月${targetDay.getDate()}日 ${days[targetDay.getDay() === 0 ? 6 : targetDay.getDay() - 1]}`;
 
-            const tops = clothingList.filter(c => c.type === 'top');
-            const pants = clothingList.filter(c => c.type === 'pants');
+      // 重置选择
+      currentSelectedOption = null;
+      document.querySelectorAll('input[name="occasion"]').forEach(r => r.checked = false);
+      document.querySelector('input[name="occasion"][value="daily"]').checked = true;
 
-            if (tops.length === 0 || pants.length === 0) {
-                container.innerHTML = '<p class="text-center text-gray-500 py-8">请先添加衣物</p>';
-                return;
-            }
+      navigateTo('dailySelector');
+      generateAIOption();
+    }
 
-            container.innerHTML = days.map((day, i) => {
-                const top = tops[i % tops.length];
-                const pant = pants[i % pants.length];
-                return `
-                    <div class="glass rounded-xl p-4">
-                        <h3 class="font-bold text-dark mb-2">${day}</h3>
-                        <p class="text-sm text-gray-600">
-                            ${top ? top.name : '-'} + ${pant ? pant.name : '-'}
-                        </p>
-                    </div>
-                `;
-            }).join('');
-        }
+    function generateAIOption() {
+      const clothes = Storage.get('clothes') || [];
+      const userInfo = Storage.get('userInfo') || {};
+      const occasion = document.querySelector('input[name="occasion"]:checked')?.value || 'daily';
 
-        // 渲染舞蹈穿搭
-        function renderDanceOutfit() {
-            const schedule = document.getElementById('dance-schedule');
-            const container = document.getElementById('dance-outfit-list');
+      // 模拟获取天气
+      fetchWeather().then(weather => {
+        const options = AIEngine.generateOutfits(occasion, weather, userInfo, clothes);
+        renderAIOptions(options);
+      });
+    }
 
-            if (userInfo && userInfo.danceClass && userInfo.danceClass.type) {
-                schedule.textContent = `${userInfo.danceClass.day} ${userInfo.danceClass.time} ${getDanceName(userInfo.danceClass.type)}`;
+    function renderAIOptions(options) {
+      const container = document.getElementById('aiOptions');
+      if (!container) return;
 
-                const danceWear = clothingList.filter(c =>
-                    c.style === 'sporty' || c.type === 'top' || c.type === 'pants'
-                );
+      if (options.length === 0) {
+        container.innerHTML = '<div class="text-center py-8 text-gray-400"><i class="fas fa-inbox text-3xl mb-2"></i><p class="text-xs">衣物不足，请先添加</p></div>';
+        return;
+      }
 
-                if (danceWear.length === 0) {
-                    container.innerHTML = '<p class="text-center text-gray-500 py-4">暂无适合舞蹈的衣物推荐</p>';
-                } else {
-                    container.innerHTML = danceWear.slice(0, 3).map(item => `
-                        <div class="glass rounded-xl p-4">
-                            <h3 class="font-bold text-dark">${item.name}</h3>
-                            <p class="text-sm text-gray-500">${getTypeName(item.type)} - ${item.style}</p>
-                        </div>
-                    `).join('');
-                }
-            } else {
-                schedule.textContent = '尚未设置舞蹈课';
-                container.innerHTML = '<p class="text-center text-gray-500 py-4">请先在个人设置中添加舞蹈课信息</p>';
-            }
-        }
+      container.innerHTML = options.map((opt, idx) => `
+        <div class="outfit-option glass-card p-4 rounded-lg" onclick="selectOutfitOption('${opt.id}', this)" data-id="${opt.id}">
+          <div class="flex items-start space-x-3">
+            <div class="flex-1">
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="font-bold text-sm">方案 ${idx + 1}</h4>
+                <span class="text-xs px-2 py-1 rounded-full bg-[#D4846A]/20 text-[#8B5E3C]">匹配度 ${opt.score}%</span>
+              </div>
+              <p class="text-xs text-gray-600 mb-2">${opt.style}</p>
+              <div class="grid grid-cols-3 gap-2 mb-2">
+                ${opt.items.map(item => `
+                  <div class="bg-white rounded p-1 text-center">
+                    <i class="fas fa-${getClothIcon(item.type)} text-xs text-[#8B5E3C]"></i>
+                    <p class="text-[10px] truncate">${item.name}</p>
+                  </div>
+                `).join('')}
+              </div>
+              <p class="text-[10px] text-gray-500">${opt.note}</p>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
 
-        // 渲染天气穿搭
-        function renderWeatherOutfit() {
-            const container = document.getElementById('weather-outfit-list');
+    function selectOutfitOption(optionId, element) {
+      // 移除之前的选中状态
+      document.querySelectorAll('.outfit-option').forEach(el => el.classList.remove('selected'));
 
-            // 模拟天气数据
-            const weatherData = [
-                { temp: 28, condition: '晴天', suggestion: '轻薄透气' },
-                { temp: 22, condition: '多云', suggestion: '舒适休闲' },
-                { temp: 18, condition: '阴天', suggestion: '添件外套' },
-                { temp: 12, condition: '小雨', suggestion: '冲锋衣+雨伞' },
-                { temp: 5, condition: '降温', suggestion: '保暖穿搭' }
-            ];
+      // 添加新的选中状态
+      element.classList.add('selected');
+      currentSelectedOption = optionId;
 
-            container.innerHTML = weatherData.map(w => `
-                <div class="glass rounded-xl p-4">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="font-bold text-dark">${w.temp}°C</span>
-                        <span class="text-sm text-gray-500">${w.condition}</span>
-                    </div>
-                    <p class="text-sm text-gray-600">${w.suggestion}</p>
-                </div>
-            `).join('');
-        }
+      // 视觉反馈
+      element.style.transform = 'scale(1.02)';
+      setTimeout(() => { element.style.transform = ''; }, 200);
+    }
 
-        // 渲染个人信息
-        function renderProfile() {
-            const container = document.getElementById('profile-info');
-            if (!userInfo) return;
+    function confirmDailyOutfit() {
+      if (!currentSelectedOption) {
+        alert('请先选择一个搭配方案！');
+        return;
+      }
 
-            const bodyTypeNames = {
-                'pear': '梨型',
-                'apple': '苹果型',
-                'h': 'H型',
-                'hourglass': '沙漏型'
-            };
+      // 保存选择
+      const today = new Date().toISOString().split('T')[0];
+      Storage.set(`outfit_${today}`, currentSelectedOption);
 
-            container.innerHTML = `
-                <div class="space-y-2">
-                    <p><span class="text-gray-500">身高:</span> ${userInfo.height || '-'} cm</p>
-                    <p><span class="text-gray-500">体重:</span> ${userInfo.weight || '-'} kg</p>
-                    <p><span class="text-gray-500">身材:</span> ${bodyTypeNames[userInfo.bodyType] || '-'}</p>
-                    <p><span class="text-gray-500">风格:</span> ${(userInfo.stylePreferences || []).join(', ') || '-'}</p>
-                    <p><span class="text-gray-500">舞蹈课:</span> ${userInfo.danceClass?.type ? getDanceName(userInfo.danceClass.type) : '未设置'}</p>
-                    <p><span class="text-gray-500">衣物总数:</span> ${clothingList.length} 件</p>
-                </div>
-            `;
-        }
+      alert('✅ 今日穿搭已确认！\n\n祝您拥有美好的一天！✨');
+      navigateTo('home');
+    }
 
-        // 获取舞种名称
-        function getDanceName(type) {
-            const names = {
-                'ballet': '芭蕾',
-                'jazz': '爵士',
-                'hiphop': '嘻哈',
-                'latin': '拉丁'
-            };
-            return names[type] || type;
-        }
+    // 监听场景变化，重新生成选项
+    document.addEventListener('change', function(e) {
+      if (e.target.name === 'occasion') {
+        generateAIOption();
+      }
+    });
 
-        // 重置用户信息
-        function resetUserInfo() {
-            if (confirm('确定要重置所有数据吗？这将清除所有衣物和用户信息。')) {
-                localStorage.removeItem('userInfo');
-                localStorage.removeItem('clothingList');
-                userInfo = null;
-                clothingList = [];
-                document.getElementById('main-page').classList.remove('active');
-                document.getElementById('welcome-page').classList.add('active');
-                document.getElementById('user-info-form').reset();
-                document.querySelectorAll('.body-type-btn').forEach(b => b.classList.remove('bg-white/50'));
-                document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('bg-white/50'));
-            }
-        }
+    // ==================== 一周穿搭计划 ====================
+    function generateWeeklyPlan(forceRegenerate = false) {
+      const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+      const weatherIcons = ['☀️', '⛅', '🌧️', '☀️', '⛅', '🌤️', '☀️'];
+      const temps = ['22°C', '20°C', '18°C', '23°C', '21°C', '25°C', '24°C'];
+      const userInfo = Storage.get('userInfo') || {};
 
-        // 注册Service Worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then(reg => console.log('Service Worker registered'))
-                    .catch(err => console.log('Service Worker registration failed:', err));
-            });
-        }
-    </script>
+      const container = document.getElementById('weeklyPlan');
+      if (!container) return;
+
+      const lastUpdate = Storage.get('lastWeeklyUpdate');
+      const needsUpdate = forceRegenerate || !lastUpdate || (new Date() - new Date(lastUpdate)) > 7 * 24 * 60 * 60 * 1000;
+
+      container.innerHTML = days.map((day, index) => {
+        const hasDance = userInfo.hasDance && index === 2;
+        const isWeekend = index >= 5;
+        let outfitType = '日常穿搭';
+        if (hasDance) outfitType = '💃 舞蹈课';
+        else if (isWeekend) outfitType = '🎉 休闲外出';
+
+        const bgColor = hasDance ? 'bg-[#D4846A]/20 text-[#8B5E3C]' : 'bg-[#A8B5A0]/20 text-[#6D4C32]';
+
+        return `
+          <div class="glass-card p-3" onclick="openDailySelector(${index})">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center space-x-2">
+                <span class="font-medium text-sm">${day}</span>
+                <span class="text-xs">${weatherIcons[index]}</span>
+                <span class="text-xs text-gray-500">${temps[index]}</span>
+              </div>
+              <div class="flex items-center space-x-1">
+                <span class="text-xs px-2 py-1 rounded-full ${bgColor}">${outfitType}</span>
+                ${needsUpdate ? '<span class="w-2 h-2 rounded-full bg-red-500"></span>' : ''}
+              </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+              <div class="bg-white rounded p-1 text-center">
+                <i class="fas fa-tshirt text-[#8B5E3C] text-xs"></i>
+                <p class="text-[10px] mt-0.5">浅色衬衫</p>
+              </div>
+              <div class="bg-white rounded p-1 text-center">
+                <i class="fas fa-user text-[#A8B5A0] text-xs"></i>
+                <p class="text-[10px] mt-0.5">牛仔裤</p>
+              </div>
+              <div class="bg-white rounded p-1 text-center">
+                <i class="fas fa-shoe-prints text-[#D4846A] text-xs"></i>
+                <p class="text-[10px] mt-0.5">小白鞋</p>
+              </div>
+            </div>
+            <p class="text-[10px] text-gray-400 mt-2 text-center"><i class="fas fa-hand-pointer mr-1"></i>点击自定义搭配</p>
+          </div>
+        `;
+      }).join('');
+
+      if (needsUpdate && forceRegenerate) {
+        Storage.set('lastWeeklyUpdate', new Date().toISOString());
+        alert('✅ 下周穿搭计划已更新！');
+      }
+    }
+
+    // ==================== 衣物管理 ====================
+    function renderClothesGrid(filter = 'all') {
+      const clothes = Storage.get('clothes') || [];
+      const filtered = filter === 'all' ? clothes : clothes.filter(c => c.type === filter);
+      const totalEl = document.getElementById('totalClothes');
+      if (totalEl) totalEl.textContent = clothes.length;
+
+      const grid = document.getElementById('clothesGrid');
+      if (!grid) return;
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '<div class="col-span-3 text-center py-12 text-gray-400"><i class="fas fa-inbox text-4xl mb-3"></i><p class="text-sm">暂无衣物，点击+添加</p></div>';
+        return;
+      }
+
+      grid.innerHTML = filtered.map(cloth => `
+        <div class="bg-white rounded-lg p-2">
+          <div class="aspect-square bg-gradient-to-br from-[#D4846A]/10 to-[#A8B5A0]/10 rounded-lg mb-2 flex items-center justify-center">
+            <i class="fas fa-${getClothIcon(cloth.type)} text-2xl text-[#8B5E3C]"></i>
+          </div>
+          <p class="text-xs font-medium truncate">${cloth.name}</p>
+          <p class="text-[10px] text-gray-500">${getStyleText(cloth.style)}</p>
+        </div>
+      `).join('');
+    }
+
+    function getClothIcon(type) {
+      return { top:'tshirt', pants:'user', skirt:'person-dress', shoes:'shoe-prints', accessory:'bag-shopping' }[type] || 'tshirt';
+    }
+
+    function getStyleText(style) {
+      return { casual:'休闲', sporty:'运动', retro:'复古', minimal:'极简', street:'街头', elegant:'优雅' }[style] || style;
+    }
+
+    function filterClothes(type) {
+      document.querySelectorAll('.category-btn').forEach(btn => {
+        btn.classList.remove('active', 'gradient-button', 'text-white');
+        btn.classList.add('bg-white');
+      });
+      event.target.classList.add('active', 'gradient-button', 'text-white');
+      event.target.classList.remove('bg-white');
+      renderClothesGrid(type);
+    }
+
+    document.getElementById('addClothingForm')?.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const newCloth = {
+        id: Date.now().toString(),
+        name: document.getElementById('clothName').value,
+        type: document.getElementById('clothType').value,
+        color: document.getElementById('clothColor').value,
+        style: document.getElementById('clothStyle').value,
+        createdAt: new Date().toISOString()
+      };
+      const clothes = Storage.get('clothes') || [];
+      clothes.push(newCloth);
+      Storage.set('clothes', clothes);
+      this.reset();
+      alert('添加成功！');
+      navigateTo('wardrobe');
+      renderClothesGrid();
+    });
+
+    function openCamera() {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.capture = 'environment';
+      input.onchange = e => {
+        if (e.target.files[0]) alert('照片已上传！AI识别中...\n（演示模式，请手动填写）');
+      };
+      input.click();
+    }
+
+    // ==================== 博主推荐 ====================
+    function generateBloggerRecommend() {
+      const selectedIds = Storage.get('selectedBloggers') || [];
+      const allBloggers = Storage.get('availableBloggers') || generateMockBloggers();
+      const container = document.getElementById('bloggerRecommend');
+      if (!container) return;
+
+      if (selectedIds.length === 0) {
+        container.innerHTML = '<div class="text-center py-6 text-gray-400"><i class="fas fa-user-friends text-2xl mb-2"></i><p class="text-xs">前往"我的"选择博主</p></div>';
+        return;
+      }
+
+      const selected = allBloggers.filter(b => selectedIds.includes(b.id)).slice(0, 2);
+      container.innerHTML = selected.map(b => `
+        <div class="blogger-card p-3 rounded-lg flex items-center space-x-3" onclick="showBloggerUpdates()">
+          <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-xl">${b.avatar}</div>
+          <div class="flex-1">
+            <p class="font-medium text-sm">${b.name}</p>
+            <p class="text-xs text-gray-500 truncate">${b.latestPost.title}</p>
+          </div>
+          <span class="text-xs text-red-500">❤️ ${b.latestPost.likes}</span>
+        </div>
+      `).join('');
+    }
+
+    function generateMockBloggers() {
+      const bloggers = [
+        { id:'b1', name:'小梨穿搭', avatar:'🍐', followers:'58w', bodyType:'pear', style:['casual','korean'], description:'梨型专属', latestPost:{ title:'春夏温柔穿搭', image:'🌸', likes:3256 }, updateTime:'2小时前' },
+        { id:'b2', name:'韩系极简', avatar:'✨', followers:'72w', bodyType:'h', style:['minimal','korean'], description:'Less is More', latestPost:{ title:'职场必备5套', image:'👔', likes:5128 }, updateTime:'4小时前' },
+        { id:'b3', name:'甜酷女孩', avatar:'🎀', followers:'45w', bodyType:'hourglass', style:['street','sporty'], description:'可盐可甜', latestPost:{ title:'约会小心机', image:'💕', likes:4521 }, updateTime:'6小时前' }
+      ];
+      Storage.set('availableBloggers', bloggers);
+      return bloggers;
+    }
+
+    function showBloggerUpdates() {
+      alert('博主动态功能开发中...\n\n将展示您关注的博主最新穿搭分享！');
+    }
+
+    // ==================== 个人中心 ====================
+    function updateProfileDisplay() {
+      const userInfo = Storage.get('userInfo') || {};
+      const heightEl = document.getElementById('profileHeight');
+      const weightEl = document.getElementById('profileWeight');
+      const bodyTypeEl = document.getElementById('profileBodyType');
+
+      if (heightEl) heightEl.textContent = (userInfo.height || '--') + ' cm';
+      if (weightEl) weightEl.textContent = (userInfo.weight || '--') + ' kg';
+      if (bodyTypeEl) {
+        const types = { pear:'梨', apple:'苹果', h:'H', hourglass:'沙漏' };
+        bodyTypeEl.textContent = (types[userInfo.bodyType] || '--') + '型';
+      }
+    }
+
+    function editUserInfo() {
+      document.getElementById('mainApp').classList.add('hidden');
+      document.getElementById('welcomePage').style.display = 'flex';
+      document.getElementById('welcomePage').classList.add('active');
+
+      const userInfo = Storage.get('userInfo') || {};
+      document.getElementById('height').value = userInfo.height || '';
+      document.getElementById('weight').value = userInfo.weight || '';
+      document.getElementById('bodyType').value = userInfo.bodyType || '';
+      document.getElementById('stylePreference').value = userInfo.stylePreference || '';
+      document.getElementById('hasFitness').checked = userInfo.hasFitness || false;
+      document.getElementById('hasDance').checked = userInfo.hasDance || false;
+      document.getElementById('commuteByBike').checked = userInfo.commuteByBike || false;
+    }
+
+    function clearAllData() {
+      if (confirm('确定要清除所有数据吗？')) {
+        Storage.remove('userInfo');
+        Storage.remove('clothes');
+        location.reload();
+      }
+    }
+
+    function initSampleData() {
+      if (!Storage.get('clothes')) {
+        Storage.set('clothes', [
+          { id:'1', name:'白色T恤', type:'top', color:'白色', style:'casual' },
+          { id:'2', name:'蓝色牛仔裤', type:'pants', color:'蓝色', style:'casual' },
+          { id:'3', name:'小白鞋', type:'shoes', color:'白色', style:'casual' },
+          { id:'4', name:'黑色连衣裙', type:'skirt', color:'黑色', style:'elegant' },
+          { id:'5', name:'运动文胸', type:'top', color:'粉色', style:'sporty' },
+          { id:'6', name:'瑜伽裤', type:'pants', color:'黑色', style:'sporty' }
+        ]);
+      }
+    }
+  </script>
 </body>
 </html>
