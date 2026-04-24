@@ -92,7 +92,7 @@
 <body class="text-gray-800">
 
   <!-- ==================== 欢迎页面 ==================== -->
-  <div id="welcomePage" class="page active min-h-screen flex items-center justify-center p-4">
+  <div id="welcomePage" class="page min-h-screen flex items-center justify-center p-4">
     <div class="w-full max-w-md">
       <div class="text-center mb-6 fade-in">
         <div class="w-20 h-20 mx-auto mb-4 rounded-full gradient-button flex items-center justify-center">
@@ -1411,99 +1411,6 @@
         navigateTo('wardrobe');
         renderClothesGrid();
       });
-    }
-  </script>
-</body>
-</html>
-
-    // ==================== 博主推荐 ====================
-    function generateBloggerRecommend() {
-      const selectedIds = Storage.get('selectedBloggers') || [];
-      const allBloggers = Storage.get('availableBloggers') || generateMockBloggers();
-      const container = document.getElementById('bloggerRecommend');
-      if (!container) return;
-
-      if (selectedIds.length === 0) {
-        container.innerHTML = '<div class="text-center py-6 text-gray-400"><i class="fas fa-user-friends text-2xl mb-2"></i><p class="text-xs">前往"我的"选择博主</p></div>';
-        return;
-      }
-
-      const selected = allBloggers.filter(b => selectedIds.includes(b.id)).slice(0, 2);
-      container.innerHTML = selected.map(b => `
-        <div class="blogger-card p-3 rounded-lg flex items-center space-x-3" onclick="showBloggerUpdates()">
-          <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center text-xl">${b.avatar}</div>
-          <div class="flex-1">
-            <p class="font-medium text-sm">${b.name}</p>
-            <p class="text-xs text-gray-500 truncate">${b.latestPost.title}</p>
-          </div>
-          <span class="text-xs text-red-500">❤️ ${b.latestPost.likes}</span>
-        </div>
-      `).join('');
-    }
-
-    function generateMockBloggers() {
-      const bloggers = [
-        { id:'b1', name:'小梨穿搭', avatar:'🍐', followers:'58w', bodyType:'pear', style:['casual','korean'], description:'梨型专属', latestPost:{ title:'春夏温柔穿搭', image:'🌸', likes:3256 }, updateTime:'2小时前' },
-        { id:'b2', name:'韩系极简', avatar:'✨', followers:'72w', bodyType:'h', style:['minimal','korean'], description:'Less is More', latestPost:{ title:'职场必备5套', image:'👔', likes:5128 }, updateTime:'4小时前' },
-        { id:'b3', name:'甜酷女孩', avatar:'🎀', followers:'45w', bodyType:'hourglass', style:['street','sporty'], description:'可盐可甜', latestPost:{ title:'约会小心机', image:'💕', likes:4521 }, updateTime:'6小时前' }
-      ];
-      Storage.set('availableBloggers', bloggers);
-      return bloggers;
-    }
-
-    function showBloggerUpdates() {
-      alert('博主动态功能开发中...\n\n将展示您关注的博主最新穿搭分享！');
-    }
-
-    // ==================== 个人中心 ====================
-    function updateProfileDisplay() {
-      const userInfo = Storage.get('userInfo') || {};
-      const heightEl = document.getElementById('profileHeight');
-      const weightEl = document.getElementById('profileWeight');
-      const bodyTypeEl = document.getElementById('profileBodyType');
-
-      if (heightEl) heightEl.textContent = (userInfo.height || '--') + ' cm';
-      if (weightEl) weightEl.textContent = (userInfo.weight || '--') + ' kg';
-      if (bodyTypeEl) {
-        const types = { pear:'梨', apple:'苹果', h:'H', hourglass:'沙漏' };
-        bodyTypeEl.textContent = (types[userInfo.bodyType] || '--') + '型';
-      }
-    }
-
-    function editUserInfo() {
-      document.getElementById('mainApp').classList.add('hidden');
-      document.getElementById('welcomePage').style.display = 'flex';
-      document.getElementById('welcomePage').classList.add('active');
-
-      const userInfo = Storage.get('userInfo') || {};
-      document.getElementById('height').value = userInfo.height || '';
-      document.getElementById('weight').value = userInfo.weight || '';
-      document.getElementById('bodyType').value = userInfo.bodyType || '';
-      document.getElementById('stylePreference').value = userInfo.stylePreference || '';
-      document.getElementById('hasFitness').checked = userInfo.hasFitness || false;
-      document.getElementById('hasDance').checked = userInfo.hasDance || false;
-      document.getElementById('commuteByBike').checked = userInfo.commuteByBike || false;
-    }
-
-    function clearAllData() {
-      if (confirm('确定要清除所有数据吗？')) {
-        Storage.remove('userInfo');
-        Storage.remove('clothes');
-        location.reload();
-      }
-    }
-
-    function initSampleData() {
-      if (!Storage.get('clothes')) {
-        Storage.set('clothes', [
-          { id:'1', name:'白色T恤', type:'top', color:'白色', style:'casual' },
-          { id:'2', name:'蓝色牛仔裤', type:'pants', color:'蓝色', style:'casual' },
-          { id:'3', name:'小白鞋', type:'shoes', color:'白色', style:'casual' },
-          { id:'4', name:'黑色连衣裙', type:'skirt', color:'黑色', style:'elegant' },
-          { id:'5', name:'运动文胸', type:'top', color:'粉色', style:'sporty' },
-          { id:'6', name:'瑜伽裤', type:'pants', color:'黑色', style:'sporty' }
-        ]);
-      }
     }
   </script>
 </body>
